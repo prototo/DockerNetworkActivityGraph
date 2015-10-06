@@ -12,7 +12,6 @@ var docker = new Docker();
  * @return {Object}     An object/hash of container details
  */
 function getContainerInfo(__container, callback) {
-
 	var container_id	= __container.Id;
 	var container		= docker.getContainer(container_id);
 
@@ -21,7 +20,7 @@ function getContainerInfo(__container, callback) {
 		var network				= container_data['NetworkSettings'];
 		var ip					= network['IPAddress'];
 		var ports				= network['Ports'];
-		var port_keys			= Object.keys(ports);
+		var port_keys			= ports ? Object.keys(ports) : [];
 
 		var exposed_ports = port_keys.map(function(port_key) {
 			var port = ports[port_key];
@@ -50,7 +49,7 @@ exports.listContainers = function(callback) {
 			getContainerInfo,
 			function(err, results) {
 				if (typeof(callback) === 'function') {
-					callback(results);
+					callback(null, results);
 				} else {
 					// if we didn't get a callback, just stdout the results
 					console.log('%j', results);
