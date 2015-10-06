@@ -2,6 +2,7 @@
     var socket = io();
     var containers_by_ip = {};
     var containers_by_port = {};
+    var views = {};
 
     function getContainer(ip, port) {
         return containers_by_ip[ip] || containers_by_port[port];
@@ -20,6 +21,8 @@
                 containers_by_port[port] = container;
             }
         }
+
+        views = setupViews(_containers);
     });
 
     socket.on('activity', function(ping) {
@@ -27,9 +30,18 @@
         var dst = getContainer(ping.dst_ip, ping.dst_port);
 
         if (src && dst) {
-            var p = document.createElement('p');
-            p.textContent = src.name + ' > ' + dst.name;
-            document.body.appendChild(p);
+            var src_view = views[src.name];
+            var dst_view = views[dst.name];
+
+            if (src_view && dst_view) {
+                src_view.background = 'red';
+                dst_view.background = 'red';
+
+                setTimeout(function() {
+                    src_view.background = 'white';
+                    dst_view.background = 'white';
+                }, 100);
+            }
         }
     });
 })();
