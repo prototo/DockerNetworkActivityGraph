@@ -36,6 +36,10 @@ Activity.getActivityStream(function(err, _stream) {
   }
 
   _stream.setEncoding('utf8');
+
+  if (activity_stream) {
+    activity_stream.destroy();
+  }
   activity_stream = _stream;
 });
 

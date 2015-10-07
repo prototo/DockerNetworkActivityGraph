@@ -20,6 +20,8 @@
                 var port = ports[_index];
                 containers_by_port[port] = container;
             }
+
+
         }
 
         views = setupViews(_containers);
@@ -30,17 +32,13 @@
         var dst = getContainer(ping.dst_ip, ping.dst_port);
 
         if (src && dst) {
+
             var src_view = views[src.name];
             var dst_view = views[dst.name];
 
             if (src_view && dst_view) {
-                src_view.background = 'red';
-                dst_view.background = 'red';
-
-                setTimeout(function() {
-                    src_view.background = 'white';
-                    dst_view.background = 'white';
-                }, 100);
+                src_view.flash();
+                dst_view.flash();
             }
         }
     });
