@@ -1,7 +1,7 @@
 (function() {
     var graph = new Springy.Graph();
 
-    var exclude = ['/config_v2.4.0', '/redis_latest']
+    var exclude = ['/config_v2.4.0', '/redis_latest'];
 
     var socket = io();
     var containers_by_ip = {};
@@ -46,8 +46,8 @@
             //     graph.removeEdge(edge);
             //     delete(src.edges[dst.name]);
             // }, 2000);
-            if (typeof(edge.data.length) === 'undefined') edge.data.length = 10;
-            else edge.data.length *= 0.9;
+            if (typeof(edge.data.length) === 'undefined') edge.data.length = 5;
+            // else edge.data.length *= 0.9;
             src.edges[dst.name] = edge;
         }
     });
@@ -63,8 +63,8 @@
 
     var layout = new Springy.Layout.ForceDirected(
         graph,
-        100.0, // Spring stiffness
-        50.0, // Node repulsion
+        30.0, // Spring stiffness
+        200.0, // Node repulsion
         0.5 // Damping
     );
 

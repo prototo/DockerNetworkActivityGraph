@@ -14,67 +14,75 @@ app.get('/', function(req, res){
 app.use(express.static('web'));
 var server = http.createServer(app);
 
+/**
+ * Zip function to turn httpry logs into something usful
+ */
+var packet_parts = ['source_ip', 'source_port', 'direction', 'dest_ip', 'dest_port', 'method', 'request_uri', 'status_code'];
+function processPacket(packet) {
+  var zipped = {};
+  packet = packet.split(/\s+/);
+
+  for (var index = 0; index < packet_parts.length; index++) {
+    zipped[packet_parts[index]] = packet[index] === undefined || packet[index] === '-' ? null : packet[index];
+  }
+
+  return zipped;
+}
+
 // =============================================================================
 //  INSPECT
 // =============================================================================
 var Inspect = require('./inspect');
-var containers = [];
-Inspect.listContainers(function(err, result) {
-  containers = result;
-});
-
-// =============================================================================
-//  ACTIVITY
-// =============================================================================
-var Activity = require('./activity');
-var re = /(\d+\.\d+\.\d+\.\d+)\.(\d+)[^\d]+(\d+\.\d+\.\d+\.\d+)\.(\d+)/g;
-var activity_stream;
-Activity.getActivityStream(function(err, _stream) {
+Inspect.listContainers(function(err, containers) {
   if (err) {
     console.error(err);
     return err;
   }
+  console.log('got ' + containers.length + ' containers');
 
-  _stream.setEncoding('utf8');
+  // =============================================================================
+  //  ACTIVITY
+  // =============================================================================
+  var Activity = require('./activity');
+  Activity.getActivityStream(function(err, stream) {
+    if (err) {
+      console.error(err);
+      return err;
+    }
+    console.log('got activity stream');
 
-  if (activity_stream) {
-    activity_stream.destroy();
-  }
-  activity_stream = _stream;
+    stream.setEncoding('utf8');
+    startServer(containers, stream);
+  });
 });
 
-// =============================================================================
-//  SOCKET.IO
-// =============================================================================
-ioserver = io(server);
-ioserver.on('connection', function(socket){
-    var user = (new Date()).getTime();
-    console.log('a user connected', user);
-    socket.on('disconnect', function(){
-        console.log('user disconnected', user);
-    });
+function startServer(containers, activity_stream) {
+  // =============================================================================
+  //  SOCKET.IO
+  // =============================================================================
+  ioserver = io(server);
+  ioserver.on('connection', function(socket){
+      var user = (new Date()).getTime();
+      console.log('a user connected', user);
 
-    while (undefined === activity_stream) {}
-
-    socket.emit('containers', containers);
-    activity_stream.on('data', function(chunk) {
-      var packets = chunk.split('\n');
-      packets.forEach(function(packet) {
-        var match = re.exec(packet);
-        if (match) {
-          socket.emit('activity', {
-            src_ip: match[1], src_port: match[2],
-            dst_ip: match[3], dst_port: match[4]
-          });
-        }
+      socket.on('disconnect', function(){
+          console.log('user disconnected', user);
       });
-    });
-});
 
+      socket.emit('containers', containers);
+      activity_stream.on('data', function(chunk) {
+        var packets = chunk.split('\n');
+        packets.forEach(function(packet) {
+          var packet = processPacket(packet);
+          socket.emit('activity', packet);
+        });
+      });
+  });
 
-// =============================================================================
-// START THE SERVER
-// =============================================================================
-server.listen(3000, function(){
-  console.log('listening on *:3000');
-});
+  // =============================================================================
+  // START THE SERVER
+  // =============================================================================
+  server.listen(3000, function(){
+    console.log('listening on *:3000');
+  });
+}

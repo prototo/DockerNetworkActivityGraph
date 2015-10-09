@@ -2,7 +2,7 @@ var Inspect = require('../inspect');
 var Docker = require('dockerode');
 
 /**
- * Find the running tcpdump activity container and return its stdout stream
+ * Find the running httpry activity container and return its stdout stream
  * @param  {Function}	callback
  * @return {Stream}
  */
@@ -12,7 +12,7 @@ exports.getActivityStream = function(callback) {
 		var activity_container;
 		for (var index = 0; index < result.length; index++) {
 			var container = result[index];
-			if ('/activity' === container.name) {
+			if ('/httpry' === container.name) {
 				activity_container = container;
 				break;
 			}
@@ -20,7 +20,7 @@ exports.getActivityStream = function(callback) {
 
 		// no activity container running, bail
 		if (undefined === activity_container) {
-			callback('activity container not found running, start the container with `--name activity` first');
+			callback('httpry container not found running, start the container with `--name httpry` first (hint: use the build/run scripts!)');
 			return false;
 		}
 
